@@ -1,4 +1,3 @@
-default rel  ; Use RIP-relative addressing by default
 
 ;reserve space for numbers
 section .bss
@@ -9,10 +8,12 @@ section .data
 	;prompts
 	prompt1 db "Enter num1: "
 	prompt2 db "Enter num2: "
+	exitmsg db "The Answer is: "
 	
 	;prompt mem length
 	prompt1_len equ prompt2 - prompt1
-	prompt2_len equ $ - prompt2
+	prompt2_len equ exitmsg - prompt2
+	exitmsg_len equ $ - exitmsg
 		
 	;result memory
 	result db 0,10
@@ -62,8 +63,18 @@ _start:
 
 	;convert result number ti ASCII, then set to result mem space
 	add rax, 48
-	mov [result], rax
 
+	;write the result to the lowest mem level
+	;prevents rax from rewriting empty area with 0s
+	mov [result], al
+
+	;Send exit msg
+	mov rax, 1
+	mov rsi, exitmsg
+	mov rdi, 1
+	mov rdx, exitmsg_len
+	syscall
+	
 	;output answer
 	mov rax, 1
 	mov rsi, result
@@ -73,6 +84,5 @@ _start:
 	
 	;exit
 	mov rax, 60
-	mov rdx, 0
+	mov rdi, 0
 	syscall
-	

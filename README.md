@@ -1,4 +1,4 @@
-#Simple Calculator
+# Simple Calculator
 A simple calculator using assembly, this is just a project to get a hold of assembly
 
 ## How to run
