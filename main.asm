@@ -35,25 +35,14 @@ _start:
 	mov rdx, 32
 	syscall
 
-	;Send prompt for second number
-	;mov rax, 1
-	;mov rsi, prompt2
-	;mov rdi, 1
-	;mov rdx, prompt2_len
-	;syscall
-
-	;Get input for num2
-	;mov rax, 0
-	;mov rsi, num2
-	;mov rdi, 0
-	;mov rdx, 8
-	;syscall
+	xor r12, r12 ; where ill hold the final calculation
 
 	;convert ASCII input of num1 to number
 	mov r9, num1
 	dec rax; remove newline from lengh
 	mov r8, rax ; hold the lengh
 	xor r10, r10
+
 .to_int:
 	movzx rax, byte [r9]	
 	sub rax, 48
@@ -63,12 +52,44 @@ _start:
 	inc r9
 	dec r8
 	jnz .to_int
+
+	mov r12, r10
+
+	;Send prompt for second number
+	mov rax, 1
+	mov rsi, prompt2
+	mov rdi, 1
+	mov rdx, prompt2_len
+	syscall
+
+	;Get input for num2
+	mov rax, 0
+	mov rsi, num2
+	mov rdi, 0
+	mov rdx, 8
+	syscall
+
+	;convert ASCII input of num2 to number
+	mov r9, num2
+	dec rax; remove newline from lengh
+	mov r8, rax ; hold the lengh
+	xor r10, r10
+
+.to_int2:
+	movzx rax, byte [r9]	
+	sub rax, 48
+	imul r10,10
+	add r10, rax
+
+	inc r9
+	dec r8
+	jnz .to_int2
+
+	add r12, r10 ; add the numbers
 	
-	add r10, 10
-	
-	mov rax, r10
+	mov rax, r12
 	mov rsi, result
-	add rsi, 10
+	add rsi, 14
 	xor r9,r9
 
 .to_str:
@@ -81,8 +102,13 @@ _start:
 	inc r9
 	test rax, rax
 	jnz .to_str
-	
-	add r9, 2
+
+	inc rsi	
+
+	mov rbx, rsi
+	add rbx, r9
+	mov [rbx], 10
+	inc r9
 
 	;output answer
 	mov rax, 1
