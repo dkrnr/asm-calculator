@@ -1,8 +1,7 @@
-
 ;reserve space for numbers
 section .bss
-	num1 resb 8
-	num2 resb 8
+	num1 resb 32
+	num2 resb 32
 
 section .data
 	;prompts
@@ -16,7 +15,7 @@ section .data
 	exitmsg_len equ $ - exitmsg
 		
 	;result memory
-	result db 0,10
+	result db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10   ; 16 bytes + newline
 
 section .text
 	global _start
@@ -33,8 +32,28 @@ _start:
 	mov rax, 0
 	mov rsi, num1
 	mov rdi, 0
-	mov rdx, 8
+	mov rdx, 32
 	syscall
+
+	xor r12, r12 ; where ill hold the final calculation
+
+	;convert ASCII input of num1 to number
+	mov r9, num1
+	dec rax; remove newline from lengh
+	mov r8, rax ; hold the lengh
+	xor r10, r10
+
+.to_int:
+	movzx rax, byte [r9]	
+	sub rax, 48
+	imul r10,10
+	add r10, rax
+
+	inc r9
+	dec r8
+	jnz .to_int
+
+	mov r12, r10
 
 	;Send prompt for second number
 	mov rax, 1
@@ -50,36 +69,51 @@ _start:
 	mov rdx, 8
 	syscall
 
-	;convert ASCII input of num1 to number
-	movzx rax, byte [num1]
-	sub rax, 48
-
 	;convert ASCII input of num2 to number
-	movzx rbx, byte [num2]
-	sub rbx, 48
+	mov r9, num2
+	dec rax; remove newline from lengh
+	mov r8, rax ; hold the lengh
+	xor r10, r10
 
-	;calculate
-	add rax, rbx
+.to_int2:
+	movzx rax, byte [r9]	
+	sub rax, 48
+	imul r10,10
+	add r10, rax
 
-	;convert result number ti ASCII, then set to result mem space
-	add rax, 48
+	inc r9
+	dec r8
+	jnz .to_int2
 
-	;write the result to the lowest mem level
-	;prevents rax from rewriting empty area with 0s
-	mov [result], al
-
-	;Send exit msg
-	mov rax, 1
-	mov rsi, exitmsg
-	mov rdi, 1
-	mov rdx, exitmsg_len
-	syscall
+	add r12, r10 ; add the numbers
 	
+	mov rax, r12
+	mov rsi, result
+	add rsi, 14
+	xor r9,r9
+
+.to_str:
+	xor rdx, rdx
+	mov rbx, 10
+	div rbx
+	add rdx, 48
+	mov [rsi], dl
+	dec rsi
+	inc r9
+	test rax, rax
+	jnz .to_str
+
+	inc rsi	
+
+	mov rbx, rsi
+	add rbx, r9
+	mov [rbx], 10
+	inc r9
+
 	;output answer
 	mov rax, 1
-	mov rsi, result
 	mov rdi, 1
-	mov rdx, 2
+	mov rdx, r9
 	syscall
 	
 	;exit
